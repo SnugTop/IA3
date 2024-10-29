@@ -188,18 +188,71 @@ class DFA:
         self.transition_table = self._make_transition_table()
 
     def _make_transition_table(self):
-        raise NotImplementedError("Require student implementation")
+        table = {}
+        for state in self.states:
+            transitions = {symbol: target.id for symbol, target in state.transitions.items()}
+            table[state.id] = transitions
+        return table
 
     def accepts(self, input_string):
-        raise NotImplementedError("Require student implementation")
+        current_state = self.start_state
+        for symbol in input_string:
+            if symbol in current_state.transitions:
+                current_state = current_state.transitions[symbol]
+            else:
+                return False  # No valid transition
+        return current_state.is_final
 
     @classmethod
     def from_nfa(cls, nfa):
+        # Helper function to compute the epsilon closure of a set of states
         def epsilon_closure(states):
-            raise NotImplementedError("Require student implementation")
+            closure = set(states)
+            stack = list(states)
+            while stack:
+                state = stack.pop()
+                if EPSILON in state.transitions:
+                    for next_state in state.transitions[EPSILON]:
+                        if next_state not in closure:
+                            closure.add(next_state)
+                            stack.append(next_state)
+            return closure
 
         def move(n_states, a):
-            raise NotImplementedError("Require student implementation")
+            result = set()
+            for state in n_states:
+                if a in state.transitions:
+                    result.update(state.transitions[a])
+            return result
 
-        raise NotImplementedError("Require student implementation")
+        # Initialize DFA start state from the epsilon closure of the NFA's start state
+        start_closure = epsilon_closure({nfa.start_state})
+        start_dfa_state = DFAState(is_final=any(s.is_final for s in start_closure), nfa_states=None)  # No need to track nfa_states in DFAState
+        
+        # Use dictionaries to track DFA states and closures
+        dfa_states = {frozenset(start_closure): start_dfa_state}
+        unmarked_states = [start_dfa_state]
+        state_map = {start_dfa_state: start_closure}  # Mapping of DFA states to their closures
 
+        # Process each DFA state
+        while unmarked_states:
+            current_dfa_state = unmarked_states.pop()
+            current_closure = state_map[current_dfa_state]
+
+            for symbol in SUPPORTED_SYMBOLS:
+                new_closure = epsilon_closure(move(current_closure, symbol))
+                if new_closure:
+                    frozen_closure = frozenset(new_closure)
+
+                    # Check if this closure set already has a DFA state
+                    if frozen_closure not in dfa_states:
+                        is_final = any(s.is_final for s in new_closure)
+                        new_dfa_state = DFAState(is_final=is_final, nfa_states=None)
+                        dfa_states[frozen_closure] = new_dfa_state
+                        unmarked_states.append(new_dfa_state)
+                        state_map[new_dfa_state] = new_closure
+                    # Add the transition for the current DFA state
+                    current_dfa_state.add_transition(symbol, dfa_states[frozen_closure])
+
+        # Return the DFA with all constructed states
+        return cls(start_dfa_state, set(dfa_states.values()))
