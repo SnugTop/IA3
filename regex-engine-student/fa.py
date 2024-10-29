@@ -96,14 +96,57 @@ class NFA:
                 start.add_transition(regex.char, end)
                 return cls(start, {start, end})
 
-            case RConcat():
-                raise NotImplementedError("Require student implementation")
+            case RConcat(left=left, right=right):
+                nfa_left = cls.from_regex(left)
+                nfa_right = cls.from_regex(right)
 
-            case RUnion():
-                raise NotImplementedError("Require student implementation")
+                nfa_left_accept_state = next(state for state in nfa_left.states if state.is_final)
+                nfa_left_accept_state.is_final = False
+                nfa_left_accept_state.add_transition(EPSILON, nfa_right.start_state)
 
-            case RStar():
-                raise NotImplementedError("Require student implementation")
+                all_states = nfa_left.states.union(nfa_right.states)
+                return cls(nfa_left.start_state, all_states)
+
+            case RUnion(left=left, right=right):
+                nfa_left = cls.from_regex(left)
+                nfa_right = cls.from_regex(right)
+
+                new_start = NFAState(False)
+                new_accept = NFAState(True)
+
+                new_start.add_transition(EPSILON, nfa_left.start_state)
+                new_start.add_transition(EPSILON, nfa_right.start_state)
+
+                nfa_left_accept_state = next(state for state in nfa_left.states if state.is_final)
+                nfa_right_accept_state = next(state for state in nfa_right.states if state.is_final)
+
+                nfa_left_accept_state.is_final = False
+                nfa_right_accept_state.is_final = False
+
+                nfa_left_accept_state.add_transition(EPSILON, new_accept)
+                nfa_right_accept_state.add_transition(EPSILON, new_accept)
+
+                all_states = {new_start, new_accept}.union(nfa_left.states).union(nfa_right.states)
+                return cls(new_start, all_states)
+
+            
+            case RStar(expr=expr):
+                nfa_expr = cls.from_regex(expr)
+
+                new_start = NFAState(False)
+                new_accept = NFAState(True)
+
+                new_start.add_transition(EPSILON, nfa_expr.start_state)
+                new_start.add_transition(EPSILON, new_accept)
+
+                nfa_expr_accept_state = next(state for state in nfa_expr.states if state.is_final)
+                nfa_expr_accept_state.is_final = False
+
+                nfa_expr_accept_state.add_transition(EPSILON, nfa_expr.start_state)
+                nfa_expr_accept_state.add_transition(EPSILON, new_accept)
+
+                all_states = {new_start, new_accept}.union(nfa_expr.states)
+                return cls(new_start, all_states)
 
         raise ValueError("Unknown regex type")
 
