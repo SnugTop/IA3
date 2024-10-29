@@ -1,5 +1,6 @@
+#main.py
 import sys
-from regex import parse_regex
+from regex import parse_regex 
 from fa import NFA, DFA
 try:
     from visualize import convert_to_visual_fa

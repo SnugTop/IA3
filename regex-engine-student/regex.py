@@ -1,3 +1,4 @@
+#regex.py
 from collections import deque
 from abc import ABC, abstractmethod
 """
@@ -11,7 +12,7 @@ class RegExpr(ABC):
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         if "__str__" not in cls.__dict__:
-            raise NotImplementedError(f"Require student implementation: {cls.__name__}.__str__()")
+           raise NotImplementedError(f"Require student implementation: {cls.__name__}.__str__()")
 
 class RNoString(RegExpr):
     def __str__(self):
@@ -22,34 +23,65 @@ class REmptyString(RegExpr):
         return "REmptyString"
 
 class RSingle(RegExpr):
+    __match_args__ = ("char",)
+
     def __init__(self, char: str):
         self.char = char
 
+    def __str__(self):
+        return f"RSingle('{self.char}')"
+
 class RConcat(RegExpr):
+    __match_args__ = ("left", "right")
+
     def __init__(self, left: RegExpr, right: RegExpr):
         self.left = left
         self.right = right
+
+    def __str__(self):
+        return f"RConcat({self.left},{self.right})"
 
 class RUnion(RegExpr):
+    __match_args__ = ("left", "right")
+
     def __init__(self, left: RegExpr, right: RegExpr):
         self.left = left
         self.right = right
 
+    def __str__(self):
+        return f"RUnion({self.left},{self.right})"
+
 class RStar(RegExpr):
+    __match_args__ = ("expr",)
+
     def __init__(self, expr: RegExpr):
         self.expr = expr
+
+    def __str__(self):
+        return f"RStar({self.expr})"
 
 class RPlus(RegExpr):
+    __match_args__ = ("expr",)
+
     def __init__(self, expr: RegExpr):
         self.expr = expr
 
+    def __str__(self):
+        return f"RPlus({self.expr})"
+
 class ROption(RegExpr):
+    __match_args__ = ("expr",)
+
     def __init__(self, expr: RegExpr):
         self.expr = expr
+
+    def __str__(self):
+        return f"ROption({self.expr})"
 
 class RAny(RegExpr):
     def __str__(self):
         return "RAny"
+    
 
 """
 Parsing

@@ -1,4 +1,5 @@
-from regex import parse_regex, RStar, RUnion, RConcat, RSingle, RNoString, RConcat, REmptyString
+#fa.py
+from regex import parse_regex, RStar, RUnion, RConcat, RSingle, RNoString, RConcat, REmptyString 
 from collections import deque
 import string 
 
