@@ -96,55 +96,74 @@ class NFA:
                 start.add_transition(regex.char, end)
                 return cls(start, {start, end})
 
+            # Implement the concatenation case, aligning with Fig. 3.41 in the Dragon Book
             case RConcat(left=left, right=right):
+                # Recursively create NFA for each part (N(s) and N(t))
                 nfa_left = cls.from_regex(left)
                 nfa_right = cls.from_regex(right)
 
+                # Find and deactivate the final state of N(s)
                 nfa_left_accept_state = next(state for state in nfa_left.states if state.is_final)
                 nfa_left_accept_state.is_final = False
+
+                # Connect N(s)'s final state to the start of N(t) with epsilon transition
                 nfa_left_accept_state.add_transition(EPSILON, nfa_right.start_state)
 
+                # Combine all states and return the full NFA
                 all_states = nfa_left.states.union(nfa_right.states)
                 return cls(nfa_left.start_state, all_states)
 
+            # Implement the union case, aligning with Fig. 3.40 in the Dragon Book
             case RUnion(left=left, right=right):
+                # Recursively create NFA for each part (N(s) and N(t))
                 nfa_left = cls.from_regex(left)
                 nfa_right = cls.from_regex(right)
 
+                # Create new start and accept states for the union
                 new_start = NFAState(False)
                 new_accept = NFAState(True)
 
+                # Epsilon transitions from new start to both N(s) and N(t) start states
                 new_start.add_transition(EPSILON, nfa_left.start_state)
                 new_start.add_transition(EPSILON, nfa_right.start_state)
 
+                # Connect each NFA's final state to the new accept state with epsilon transitions
                 nfa_left_accept_state = next(state for state in nfa_left.states if state.is_final)
                 nfa_right_accept_state = next(state for state in nfa_right.states if state.is_final)
 
                 nfa_left_accept_state.is_final = False
                 nfa_right_accept_state.is_final = False
 
+                # Add epsilon transitions from each sub-NFA’s accept state to the new accept
                 nfa_left_accept_state.add_transition(EPSILON, new_accept)
                 nfa_right_accept_state.add_transition(EPSILON, new_accept)
 
+                # Combine all states and return the full NFA
                 all_states = {new_start, new_accept}.union(nfa_left.states).union(nfa_right.states)
                 return cls(new_start, all_states)
 
-            
+            # Implement the star case, aligning with Fig. 3.42 in the Dragon Book
             case RStar(expr=expr):
+                # Recursively create NFA for the inner expression (N(s))
                 nfa_expr = cls.from_regex(expr)
 
+                # Create new start and accept states for the star operation
                 new_start = NFAState(False)
                 new_accept = NFAState(True)
 
+                # Epsilon transition from new start state to both N(s) start and new accept state
                 new_start.add_transition(EPSILON, nfa_expr.start_state)
                 new_start.add_transition(EPSILON, new_accept)
 
+                # Deactivate the final state of N(s) and create loops back to start
                 nfa_expr_accept_state = next(state for state in nfa_expr.states if state.is_final)
                 nfa_expr_accept_state.is_final = False
 
+                # Loop back from N(s)'s final state to its start, and to the new accept state
                 nfa_expr_accept_state.add_transition(EPSILON, nfa_expr.start_state)
                 nfa_expr_accept_state.add_transition(EPSILON, new_accept)
 
+                # Combine all states and return the full NFA
                 all_states = {new_start, new_accept}.union(nfa_expr.states)
                 return cls(new_start, all_states)
 
