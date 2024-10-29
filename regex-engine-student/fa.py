@@ -27,8 +27,16 @@ class NFA:
 
     def _make_transition_table(self):
         table = {}
-        raise NotImplementedError("Require student implementation")
+        for state in self.states:
+            transitions = {}
+            for symbol, target_states in state.transitions.items():
+                transitions[symbol] = {s.id for s in target_states}
+            if transitions:
+                table[state.id] = transitions
+            else:
+                table[state.id] = {}  # Empty dict if no transitions
 
+        return table
     def is_final_state(self, state_id):
             for state in self.states:
                 if state.id == state_id:
