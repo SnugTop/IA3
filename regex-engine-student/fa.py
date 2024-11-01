@@ -1,4 +1,5 @@
 #fa.py
+#All three test passed
 from regex import parse_regex, RStar, RUnion, RConcat, RSingle, RNoString, RConcat, REmptyString 
 from collections import deque
 import string 
